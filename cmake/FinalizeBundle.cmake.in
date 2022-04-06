@@ -52,6 +52,20 @@ endif()
 message(STATUS "Fixing up bundle...")
 fixup_bundle("${BUNDLE_PATH}" "" "")
 
+message(STATUS "Fixing code signatures...")
+execute_process(
+  COMMAND find "${BUNDLE_PATH}" \( -name "*.dylib" -o -name "*.framework" \)
+  OUTPUT_VARIABLE files_to_sign
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+if (files_to_sign)
+    string(REPLACE "\n" ";" files_to_sign ${files_to_sign})
+    foreach(file_to_sign IN LISTS files_to_sign)
+      execute_process(COMMAND codesign --force -s - "${file_to_sign}")
+    endforeach()
+endif()
+execute_process(COMMAND codesign --force -s - "${BUNDLE_PATH}/Contents/MacOS/Quassel\ Client")
+
 # Create the DMG image
 message(STATUS "Creating DMG image...")
 execute_process(
